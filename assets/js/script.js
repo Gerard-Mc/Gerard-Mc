@@ -1,31 +1,51 @@
+const GAMEKEY = 'ape-game-storage-key';
+const MAX_LEVEL = 5;
+
 class ApeBrain {
-    constructor(maxBoxes, startGameCountDownTime, gameStageCountDownTime) {
+    constructor(boxes, gameStageCountDownTime) {
         this.randomNumbers = null;
         this.started = false;
         this.startButtonEl = document.getElementById("start-button");
         this.clickCounter = 0;
-        this.maxBoxes = maxBoxes;
-        this.startGameCountDownTime = startGameCountDownTime;
-        this.gameStageCountDownTime = gameStageCountDownTime;
-        this.addListener();
 
+        this.score = 0;
+        this.boxes = boxes;
+        this.startGameCountDownTime = 0;
+        this.gameStageCountDownTime = gameStageCountDownTime;
+
+        this.loadGameState();
+        this.addListener();
     }
 
     start() {
-
         this.started = false;
         this.clickCounter = 0;
-        this.randomNumbers = this.creatingRandomNumbers(this.maxBoxes);
+        this.score = 0;
+        this.startGameCountDownTime = MAX_LEVEL - this.gameState.level;
+        this.randomNumbers = this.creatingRandomNumbers(this.boxes);
         this.startButtonEl.classList.remove('d-none');
         this.countDown(this.startGameCountDownTime, () => {
             this.startButtonEl.classList.add('d-none');
             this.renderBoard();
             this.countDown(this.gameStageCountDownTime, () => {
-                
                 this.gameStarted();
             });
-        });
+        },
+            (seconds) => {
+                this.startButtonEl.innerText = seconds;
+            });
+    }
 
+    loadGameState() {
+        this.gameState = JSON.parse(localStorage.getItem(GAMEKEY));
+        if (!this.gameState) {
+            this.gameState = { level: 1, highScore: 0 };
+        }
+        this.renderState();
+    }
+
+    updateGameState() {
+        localStorage.setItem(GAMEKEY, JSON.stringify(this.gameState));
     }
 
     gameStarted() {
@@ -33,67 +53,101 @@ class ApeBrain {
             el.innerHTML = ''
         });
         this.started = true;
-
     }
 
-      countDown(timeInSeconds, callback) {
+    /**
+     * 
+     * @param {Number} timeInSeconds 
+     * @param {Function} callback 
+     */
+    countDown(timeInSeconds, callback, iterCallback = null) {
         let seconds = timeInSeconds;
         const clock = setInterval(() => {
             seconds--;
-            
-            if(seconds > 3){
-            this.startButtonEl.innerText = "You have 2 seconds to memorize the board";
-            this.startButtonEl.classList.add("change-font-size");
-            }
-            
-            else{
-                this.startButtonEl.innerText = seconds;
-                this.startButtonEl.classList.remove("change-font-size");
-            }
-            
-            
             if (seconds === 0) {
-                this.startButtonEl.classList.add('d-none');
                 clearInterval(clock);
                 callback();
             }
-
-        }, 800);
+            if (iterCallback) {
+                iterCallback(seconds);
+            }
+        }, 1000);
     }
 
-   addListener(){
+    addListener() {
         const boxContainer = document.getElementById("box-container");
-        boxContainer.addEventListener("click", (event) => {
+        document.getElementById("score");
 
+        boxContainer.addEventListener("click", (event) => {
             if (!this.started) {
                 return;
             }
-            
+
             this.clickCounter++;
 
-         if (!this.checkClick(event.target.firstElementChild)) {
-                Array.from(document.getElementsByClassName('col')).forEach((el, index) => {
-                    el.remove();
-                });
-
-            } else {
-
-                event.target.classList.add('invisible');
+            if (!this.checkClick(event.target.firstElementChild)) {
+                // Game Over!
+                this.gameOver();
             }
+            else {
+                // Hide the clicked number
+                event.target.classList.add('invisible');
+                this.score++;
 
+                // Check score
+                if (this.gameState.highScore < this.score) {
+                    this.gameState.highScore = this.score;
+                }
+
+                // Player won!!!
+                if (this.clickCounter === this.boxes - 1) {
+                    if (this.gameState.level < MAX_LEVEL) {
+                        this.gameState.level++;
+                        this.score = 0;
+                        this.gameState.highScore = 0;
+                    }
+                    this.playerWon();
+                }
+            }
+            // Game state is always store after a click on the board.
+            this.updateGameState();
+            this.renderState();
         });
-        
+
         this.startButtonEl.addEventListener("click", () => {
-            if (this.startButtonEl.innerText === "Start" && (event.detail == 1)) {
+            if ((this.startButtonEl.innerText === "Start" || "Retry?") && (event.detail == 1)) {
                 this.start();
-
-
             }
         });
 
     }
 
+    gameOver() {
+        this.removeBoxes();
+        this.startButtonEl.innerText = "Retry?";
+        this.startButtonEl.classList.remove('d-none');
+    }
 
+    playerWon() {
+        this.removeBoxes();
+        this.startButtonEl.innerText = "Retry?";
+        this.startButtonEl.classList.remove('d-none');
+    }
+
+    removeBoxes() {
+        Array.from(document.getElementsByClassName('col')).forEach((el, index) => {
+            el.remove();
+        });
+    }
+
+    renderState() {
+        const scoreLabel = document.getElementById('score');
+        const highScoreLabel = document.getElementById('high-score');
+        const levelLabel = document.getElementById('level');
+        scoreLabel.innerText = this.score;
+        highScoreLabel.innerText = this.gameState.highScore;
+        levelLabel.innerText = this.gameState.level;
+    }
 
     checkClick(boxElement) {
         return parseInt(boxElement.dataset.value) === this.clickCounter;
@@ -109,15 +163,11 @@ class ApeBrain {
         });
     }
 
-
-
-
-       renderBox(index) {
+    renderBox(index) {
         return `<div class="box" id="number-box-${index}">
-                    
-                        <p class="box-text number" data-value="${this.randomNumbers[index]}">${this.randomNumbers[index]}</p>
-                    </div>
-                </div>`;
+                    <p class="box-text number" data-value="${this.randomNumbers[index]}">${this.randomNumbers[index]}</p>
+                </div>
+            </div>`;
     }
 
     creatingRandomNumbers(total) {
@@ -133,13 +183,10 @@ class ApeBrain {
         }
         return randomNumbers;
     }
-
-
-
 }
 
-const apeBrain = new ApeBrain(9, 6, 2);
+const apeBrain = new ApeBrain(9, 2);
 
-// console.log(apeBrainGame.started);
-// apeBrainGame.randomNumbers = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12];
-// console.log(apeBrainGame.renderBox(10));
+//console.log(apeBrain.clickCounter);
+//apeBrain.randomNumbers = [1];
+//console.log(apeBrain.renderBox(10));
