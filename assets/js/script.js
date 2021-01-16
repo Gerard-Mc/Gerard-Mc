@@ -2,16 +2,15 @@ const GAMEKEY = 'ape-game-storage-key';
 const MAX_LEVEL = 5;
 
 class ApeBrain {
-    constructor(boxes, gameStageCountDownTime) {
+    constructor() {
         this.randomNumbers = null;
         this.started = false;
         this.startButtonEl = document.getElementById("start-button");
         this.clickCounter = 0;
 
         this.score = 0;
-        this.boxes = boxes;
-        this.startGameCountDownTime = 0;
-        this.gameStageCountDownTime = gameStageCountDownTime;
+        this.boxes = 9;
+        this.startGameCountDownTime = 6;
 
         this.loadGameState();
         this.addListener();
@@ -21,7 +20,7 @@ class ApeBrain {
         this.started = false;
         this.clickCounter = 0;
         this.score = 0;
-        this.startGameCountDownTime = MAX_LEVEL - this.gameState.level;
+        this.gameStageCountDownTime = MAX_LEVEL - this.gameState.record; // will be level
         this.randomNumbers = this.creatingRandomNumbers(this.boxes);
         this.startButtonEl.classList.remove('d-none');
         this.countDown(this.startGameCountDownTime, () => {
@@ -37,15 +36,15 @@ class ApeBrain {
     }
 
     loadGameState() {
-        this.gameState = JSON.parse(localStorage.getItem(GAMEKEY));
+        this.gameState = JSON.parse(sessionStorage.getItem(GAMEKEY));
         if (!this.gameState) {
-            this.gameState = { level: 1, highScore: 0 };
+            this.gameState = { record: 0, level: 1 };
         }
         this.renderState();
     }
 
     updateGameState() {
-        localStorage.setItem(GAMEKEY, JSON.stringify(this.gameState));
+        sessionStorage.setItem(GAMEKEY, JSON.stringify(this.gameState));
     }
 
     gameStarted() {
@@ -71,7 +70,7 @@ class ApeBrain {
             if (iterCallback) {
                 iterCallback(seconds);
             }
-        }, 1000);
+        }, 600);
     }
 
     addListener() {
@@ -95,16 +94,16 @@ class ApeBrain {
                 this.score++;
 
                 // Check score
-                if (this.gameState.highScore < this.score) {
-                    this.gameState.highScore = this.score;
+                if (this.gameState.level < this.score) {
+                    this.gameState.level = this.score;
                 }
 
                 // Player won!!!
                 if (this.clickCounter === this.boxes - 1) {
-                    if (this.gameState.level < MAX_LEVEL) {
-                        this.gameState.level++;
+                    if (this.gameState.record < MAX_LEVEL) {
+                        this.gameState.record++;
                         this.score = 0;
-                        this.gameState.highScore = 0;
+                        this.gameState.level = 0;
                     }
                     this.playerWon();
                 }
@@ -142,11 +141,11 @@ class ApeBrain {
 
     renderState() {
         const scoreLabel = document.getElementById('score');
-        const highScoreLabel = document.getElementById('high-score');
-        const levelLabel = document.getElementById('level');
+        const levelScoreLabel = document.getElementById('level');
+        const recordScoreLabel = document.getElementById('record');
         scoreLabel.innerText = this.score;
-        highScoreLabel.innerText = this.gameState.highScore;
-        levelLabel.innerText = this.gameState.level;
+        levelScoreLabel.innerText = this.gameState.level;
+        recordScoreLabel.innerText = this.gameState.record;
     }
 
     checkClick(boxElement) {
