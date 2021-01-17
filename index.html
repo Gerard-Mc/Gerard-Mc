@@ -12,35 +12,48 @@
       <link rel="stylesheet" href="assets/css/style.css">
       <title>Ape Brain</title>
    </head>
-   <body>
+   <body id="game-body">
       <header>
          <div id="game-hub">
             <div id="logo-circle"></div>
-            <h1>APE<br>BRAIN</h1>
+            <h1><a href="index.html">APE BRAIN</a></h1>
         
          <div id="score-wrap">
-            <div class="score-circle">
-               <h2>Score</h2>
-               <p id="score">0</p>
-            </div>
-             <div class="score-circle">
-               <h2>Level</h2>
-               <p id="level">0</p>
-            </div> 
-             <div class="score-circle">
-               <h2>Record</h2>
+             <div id="record-holderEl" class="score-circle">
+               <h2 id="record-h2">Record</h2>
                <p id="record">0</p>
             </div>
              
+             <div id="level-holderEl" class="score-circle">
+               <h2>Level</h2>
+               <p id="level">0</p>
+            </div> 
+             
+             <div id="score-holderEl" class="score-circle">
+               <h2>Score</h2>
+               <p id="score">0</p>
+            </div>
+             
+             
          </div>
+             
+             <div id="info-page" class="score-circle">
+               <h2><a href="index.html">Home<br><br><span><i class="fas fa-backward"></i></span></a></h2>
+              
+            </div>
+             
               </div>
       </header>
+       <button id="reset-button">Reset Scores
+       </button>
       <button id="start-button">Start
        </button>
       <div class="container-fluid" id="game-area">
          <div class="" id="box-container">
          </div>
       </div>
+       
+       
       <!-- JavaScript Bundle with Popper -->
       <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.0.0-beta1/dist/js/bootstrap.bundle.min.js"
          integrity="sha384-ygbV9kiqUc6oa4msXn9868pTtWMgiQaeYH7/t7LECLbyPA2x65Kgf80OJFdroafW"
