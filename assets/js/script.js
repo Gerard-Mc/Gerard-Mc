@@ -8,7 +8,7 @@ class ApeBrain {
         this.resetButtonEl = document.getElementById("reset-button");
 		this.clickCounter = 0;
 		this.score = 0;
-		this.boxes = 2;
+		this.boxes = 9;
 		this.startGameCountDownTime = 6;
 		this.loadGameState();
 		this.addListener();
@@ -68,7 +68,7 @@ class ApeBrain {
 			if(iterCallback) {
 				iterCallback(seconds);
 			}
-		}, 100);
+		}, 1000);
 	}
 	addListener() {
 		const boxContainer = document.getElementById("box-container");
